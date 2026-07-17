@@ -3,6 +3,10 @@ import Login from './components/Login';
 import Dashboard from './components/Dashboard';
 import AccountManager from './components/AccountManager';
 import { LogOut, Briefcase, ChevronDown, Check, Settings } from 'lucide-react';
+import { auth, db } from './firebase';
+import { onAuthStateChanged, signOut } from 'firebase/auth';
+import { collection, query, where, onSnapshot } from 'firebase/firestore';
+import LocalDataMigrator from './components/LocalDataMigrator';
 
 // Generate a stable accent color per account index
 const ACCOUNT_COLORS = [
@@ -12,7 +16,6 @@ const ACCOUNT_COLORS = [
 ];
 
 function App() {
-  const [token, setToken] = useState(localStorage.getItem('token') || '');
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -22,75 +25,55 @@ function App() {
   const [defaultAccountId, setDefaultAccountId] = useState(null);
   const [showAccountDropdown, setShowAccountDropdown] = useState(false);
   const [showAccountManager, setShowAccountManager] = useState(false);
+  const [refreshTrigger, setRefreshTrigger] = useState(0); // Trigger to reload data after migration
 
   const accountDropdownRef = useRef(null);
 
-  const handleLogout = () => {
-    localStorage.removeItem('token');
-    setToken('');
-    setUser(null);
-    setAccounts([]);
-    setSelectedAccountId(null);
-  };
-
-  const fetchUser = () => {
+  const handleLogout = async () => {
     try {
-      if (token && token.startsWith('mock-token-')) {
-        const userId = token.replace('mock-token-', '');
-        const users = JSON.parse(localStorage.getItem('indiaportfolio_users') || '[]');
-        const found = users.find(u => u.id === userId);
-        if (found) {
-          setUser({ id: found.id, email: found.email, name: found.name });
-        } else {
-          handleLogout();
-        }
+      await signOut(auth);
+    } catch (e) {
+      console.error('Logout error:', e);
+    }
+  };
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+      if (firebaseUser) {
+        setUser({ id: firebaseUser.uid, email: firebaseUser.email, name: firebaseUser.displayName });
       } else {
-        handleLogout();
+        setUser(null);
+        setAccounts([]);
+        setSelectedAccountId(null);
       }
-    } catch (error) {
-      console.error('Error validating local session:', error);
-      handleLogout();
-    } finally {
       setLoading(false);
-    }
-  };
+    });
+    return () => unsubscribe();
+  }, []);
 
-  const initAccounts = (userId) => {
-    const allAccounts = JSON.parse(localStorage.getItem('indiaportfolio_accounts') || '[]');
-    const userAccounts = allAccounts.filter(a => a.userId === userId);
-    setAccounts(userAccounts);
-
-    // Load or initialise the default account id
-    const storedDefault = localStorage.getItem(`indiaportfolio_default_account_${userId}`);
-    if (storedDefault && userAccounts.find(a => a.id === storedDefault)) {
-      setDefaultAccountId(storedDefault);
-    } else if (userAccounts.length > 0) {
-      // Fall back to first account if stored default no longer exists
-      setDefaultAccountId(userAccounts[0].id);
-      localStorage.setItem(`indiaportfolio_default_account_${userId}`, userAccounts[0].id);
-    } else {
-      setDefaultAccountId(null);
-    }
-  };
-
-  // Validate token on mount
   useEffect(() => {
-    if (token) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      fetchUser();
-    } else {
-      setLoading(false);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [token]);
+    if (!user) return;
+    
+    const q = query(collection(db, 'accounts'), where('userId', '==', user.id));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const userAccounts = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setAccounts(userAccounts);
 
-  // Load/init accounts when user is set
-  useEffect(() => {
-    if (user) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      initAccounts(user.id);
-    }
-  }, [user]);
+      const storedDefault = localStorage.getItem(`indiaportfolio_default_account_${user.id}`);
+      if (storedDefault && userAccounts.find(a => a.id === storedDefault)) {
+        setDefaultAccountId(storedDefault);
+      } else if (userAccounts.length > 0) {
+        setDefaultAccountId(userAccounts[0].id);
+        localStorage.setItem(`indiaportfolio_default_account_${user.id}`, userAccounts[0].id);
+      } else {
+        setDefaultAccountId(null);
+      }
+    }, (error) => {
+      console.error("Error fetching accounts:", error);
+    });
+
+    return () => unsubscribe();
+  }, [user, refreshTrigger]);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -114,18 +97,11 @@ function App() {
   };
 
   const handleAccountsChange = (updatedAccounts) => {
-    setAccounts(updatedAccounts);
-    // If selected account was deleted, reset to "All Accounts"
+    // We can mostly ignore this now because onSnapshot handles real-time updates!
+    // But we still need to reset selectedAccountId if the selected account was deleted.
     if (selectedAccountId && !updatedAccounts.find(a => a.id === selectedAccountId)) {
       setSelectedAccountId(null);
     }
-    // defaultAccountId reassignment is handled inside AccountManager via onDefaultChange
-  };
-
-  const handleLogin = (newToken, newUser) => {
-    localStorage.setItem('token', newToken);
-    setToken(newToken);
-    setUser(newUser);
   };
 
   // handleLogout is declared above fetchUser (hoisted for use in fetchUser)
@@ -340,8 +316,9 @@ function App() {
 
           {/* Main Content */}
           <main className="container animate-fade-in" style={{ paddingBottom: '3rem' }}>
+            <LocalDataMigrator user={user} onComplete={() => setRefreshTrigger(prev => prev + 1)} />
             <Dashboard
-              token={token}
+              user={user}
               accounts={accounts}
               selectedAccountId={selectedAccountId}
               defaultAccountId={defaultAccountId}
@@ -360,7 +337,7 @@ function App() {
           />
         </>
       ) : (
-        <Login onLoginSuccess={handleLogin} />
+        <Login />
       )}
     </div>
   );

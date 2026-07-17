@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import { X, Plus, Trash2, Edit2, Check, Briefcase, Star } from 'lucide-react';
+import { db } from '../firebase';
+import { doc, addDoc, deleteDoc, updateDoc, collection, query, where, getDocs, writeBatch } from 'firebase/firestore';
 
 const MAX_ACCOUNTS = 10;
 
@@ -11,15 +13,7 @@ function AccountManager({ isOpen, onClose, userId, accounts, defaultAccountId, o
 
   if (!isOpen) return null;
 
-  // --- Helpers that persist to localStorage ---
-  const saveAccounts = (updated) => {
-    const allAccounts = JSON.parse(localStorage.getItem('indiaportfolio_accounts') || '[]');
-    const others = allAccounts.filter(a => a.userId !== userId);
-    localStorage.setItem('indiaportfolio_accounts', JSON.stringify([...others, ...updated]));
-    onAccountsChange(updated);
-  };
-
-  const handleCreate = (e) => {
+  const handleCreate = async (e) => {
     e.preventDefault();
     setError('');
     const name = newAccountName.trim();
@@ -32,22 +26,24 @@ function AccountManager({ isOpen, onClose, userId, accounts, defaultAccountId, o
       setError(`Maximum ${MAX_ACCOUNTS} accounts allowed.`);
       return;
     }
-    const newAcc = {
-      id: Date.now().toString(36) + Math.random().toString(36).substr(2, 5),
-      userId,
-      name,
-      createdAt: new Date().toISOString()
-    };
-    const updated = [...accounts, newAcc];
-    saveAccounts(updated);
-    // If this is the first account, auto-set as default
-    if (accounts.length === 0) {
-      onDefaultChange(newAcc.id);
+    
+    try {
+      const docRef = await addDoc(collection(db, 'accounts'), {
+        userId,
+        name,
+        createdAt: new Date().toISOString()
+      });
+      if (accounts.length === 0) {
+        onDefaultChange(docRef.id);
+      }
+      setNewAccountName('');
+    } catch (err) {
+      setError('Failed to create account.');
+      console.error(err);
     }
-    setNewAccountName('');
   };
 
-  const handleDelete = (accId) => {
+  const handleDelete = async (accId) => {
     const acc = accounts.find(a => a.id === accId);
     if (!acc) return;
 
@@ -60,23 +56,30 @@ function AccountManager({ isOpen, onClose, userId, accounts, defaultAccountId, o
 
     if (!window.confirm(confirmMsg)) return;
 
-    // Move transactions to first remaining account (or null)
-    const targetId = remaining.length > 0 ? remaining[0].id : null;
-    const allTxs = JSON.parse(localStorage.getItem('indiaportfolio_txs') || '[]');
-    const updatedTxs = allTxs.map(tx => {
-      if (tx.accountId === accId && tx.userId === userId) {
-        return { ...tx, accountId: targetId };
+    try {
+      const targetId = remaining.length > 0 ? remaining[0].id : null;
+      
+      // Move transactions
+      const txsRef = collection(db, 'transactions');
+      const q = query(txsRef, where('accountId', '==', accId), where('userId', '==', userId));
+      const snapshot = await getDocs(q);
+      
+      const batch = writeBatch(db);
+      snapshot.docs.forEach((txDoc) => {
+        batch.update(txDoc.ref, { accountId: targetId });
+      });
+      await batch.commit();
+
+      // Delete account
+      await deleteDoc(doc(db, 'accounts', accId));
+
+      if (editingId === accId) setEditingId(null);
+      if (defaultAccountId === accId) {
+        onDefaultChange(remaining.length > 0 ? remaining[0].id : null);
       }
-      return tx;
-    });
-    localStorage.setItem('indiaportfolio_txs', JSON.stringify(updatedTxs));
-
-    saveAccounts(remaining);
-    if (editingId === accId) setEditingId(null);
-
-    // If deleted account was the default, reassign default
-    if (defaultAccountId === accId) {
-      onDefaultChange(remaining.length > 0 ? remaining[0].id : null);
+    } catch (err) {
+      setError('Failed to delete account.');
+      console.error(err);
     }
   };
 
@@ -86,7 +89,7 @@ function AccountManager({ isOpen, onClose, userId, accounts, defaultAccountId, o
     setError('');
   };
 
-  const commitEdit = (accId) => {
+  const commitEdit = async (accId) => {
     setError('');
     const name = editingName.trim();
     if (!name) { setError('Name cannot be empty.'); return; }
@@ -94,9 +97,14 @@ function AccountManager({ isOpen, onClose, userId, accounts, defaultAccountId, o
       setError('An account with this name already exists.');
       return;
     }
-    saveAccounts(accounts.map(a => a.id === accId ? { ...a, name } : a));
-    setEditingId(null);
-    setEditingName('');
+    try {
+      await updateDoc(doc(db, 'accounts', accId), { name });
+      setEditingId(null);
+      setEditingName('');
+    } catch (err) {
+      setError('Failed to update account.');
+      console.error(err);
+    }
   };
 
   const accentColors = [

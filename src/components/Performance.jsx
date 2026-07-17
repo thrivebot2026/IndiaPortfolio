@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { RefreshCw, Plus } from 'lucide-react';
+import { db } from '../firebase';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
 
 const INITIAL_DATA = [
   { id: 'inv', type: 'fund', label: 'Invested Fund', value: 39.5, pocBase: 40.00 },
@@ -30,29 +32,39 @@ for (let y = 2026; y <= 2043; y++) {
   INITIAL_DATA.push({ id: y.toString(), type: 'year', age: y - 2026 + 43, year: y, value: null, nifty: null });
 }
 
-export default function Performance() {
+export default function Performance({ user }) {
   const [data, setData] = useState([]);
+  const [loadingPerf, setLoadingPerf] = useState(true);
 
   useEffect(() => {
-    const saved = localStorage.getItem('indiaportfolio_performance_data');
-    if (saved) {
+    if (!user) return;
+    const fetchPerf = async () => {
       try {
-        setData(JSON.parse(saved));
-      } catch (e) {
+        const perfDoc = await getDoc(doc(db, 'performance', user.id));
+        if (perfDoc.exists()) {
+          setData(perfDoc.data().rows);
+        } else {
+          setData(INITIAL_DATA);
+        }
+      } catch (err) {
+        console.error("Error fetching performance data:", err);
         setData(INITIAL_DATA);
+      } finally {
+        setLoadingPerf(false);
       }
-    } else {
-      setData(INITIAL_DATA);
-    }
-  }, []);
+    };
+    fetchPerf();
+  }, [user]);
 
-  const handleValueChange = (index, newValueStr) => {
+  const handleValueChange = async (index, newValueStr) => {
     const newData = [...data];
     const val = newValueStr === '' ? null : parseFloat(newValueStr);
     newData[index] = { ...newData[index], value: val };
     
     setData(newData);
-    localStorage.setItem('indiaportfolio_performance_data', JSON.stringify(newData));
+    if (user) {
+      await setDoc(doc(db, 'performance', user.id), { rows: newData });
+    }
   };
 
   const handleAddFund = () => {
@@ -83,7 +95,9 @@ export default function Performance() {
 
     newData.splice(insertIndex, 0, newFund);
     setData(newData);
-    localStorage.setItem('indiaportfolio_performance_data', JSON.stringify(newData));
+    if (user) {
+      setDoc(doc(db, 'performance', user.id), { rows: newData });
+    }
   };
 
   const calculateTable = () => {
@@ -182,10 +196,12 @@ export default function Performance() {
             Add Fund
           </button>
           <button
-            onClick={() => {
+            onClick={async () => {
               if (window.confirm('Are you sure you want to reset all performance data to initial values?')) {
                 setData(INITIAL_DATA);
-                localStorage.setItem('indiaportfolio_performance_data', JSON.stringify(INITIAL_DATA));
+                if (user) {
+                  await setDoc(doc(db, 'performance', user.id), { rows: INITIAL_DATA });
+                }
               }
             }}
             className="btn"

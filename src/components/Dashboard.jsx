@@ -6,6 +6,8 @@ import {
   TrendingUp, TrendingDown, Wallet, Calendar, Landmark, Info, X, ChevronDown, ChevronRight,
   Clock, MessageSquare, Download, Pencil
 } from 'lucide-react';
+import { db } from '../firebase';
+import { collection, query, where, getDocs, addDoc, updateDoc, deleteDoc, doc } from 'firebase/firestore';
 
 const ACCOUNT_COLORS = [
   '#6366f1', '#a855f7', '#14b8a6', '#f59e0b',
@@ -28,7 +30,7 @@ const toDisplayDate = (ymd) => {
   return `${d || ''}/${m || ''}/${y || ''}`;
 };
 
-function Dashboard({ token, accounts = [], selectedAccountId, defaultAccountId }) {
+function Dashboard({ user, accounts = [], selectedAccountId, defaultAccountId }) {
   // Tabs state
   const [activeTab, setActiveTab] = useState('holdings'); // 'holdings' or 'transactions'
 
@@ -99,9 +101,12 @@ function Dashboard({ token, accounts = [], selectedAccountId, defaultAccountId }
   const fetchPortfolio = async (isManualRefresh = false) => {
     if (isManualRefresh) setRefreshing(true);
     try {
-      const userId = token.replace('mock-token-', '');
-      const allTxs = JSON.parse(localStorage.getItem('indiaportfolio_txs') || '[]');
-      let userTxs = allTxs.filter(t => t.userId === userId);
+      const userId = user.id;
+      const q = query(collection(db, 'transactions'), where('userId', '==', userId));
+      const snapshot = await getDocs(q);
+      const allTxs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      
+      let userTxs = allTxs;
       // Filter by selected account (null = All Accounts)
       if (selectedAccountId) {
         userTxs = userTxs.filter(t => t.accountId === selectedAccountId);
@@ -352,11 +357,14 @@ function Dashboard({ token, accounts = [], selectedAccountId, defaultAccountId }
     }
   };
 
-  const fetchTransactions = () => {
+  const fetchTransactions = async () => {
     try {
-      const userId = token.replace('mock-token-', '');
-      const allTxs = JSON.parse(localStorage.getItem('indiaportfolio_txs') || '[]');
-      let userTxs = allTxs.filter(t => t.userId === userId);
+      const userId = user.id;
+      const q = query(collection(db, 'transactions'), where('userId', '==', userId));
+      const snapshot = await getDocs(q);
+      const allTxs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+      let userTxs = allTxs;
       // Filter by selected account (null = All Accounts)
       if (selectedAccountId) {
         userTxs = userTxs.filter(t => t.accountId === selectedAccountId);
@@ -490,8 +498,10 @@ function Dashboard({ token, accounts = [], selectedAccountId, defaultAccountId }
     }
 
     try {
-      const userId = token.replace('mock-token-', '');
-      const allTxs = JSON.parse(localStorage.getItem('indiaportfolio_txs') || '[]');
+      const userId = user.id;
+      const q = query(collection(db, 'transactions'), where('userId', '==', userId));
+      const snapshot = await getDocs(q);
+      const allTxs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
       // Construct transaction object
       let newTx;
@@ -516,7 +526,6 @@ function Dashboard({ token, accounts = [], selectedAccountId, defaultAccountId }
         };
       } else {
         newTx = {
-          id: Date.now().toString(36) + Math.random().toString(36).substr(2, 5),
           userId,
           accountId: formAccountId,
           symbol: formSymbol.toUpperCase(),
@@ -539,7 +548,7 @@ function Dashboard({ token, accounts = [], selectedAccountId, defaultAccountId }
         simulatedTxs = [...allTxs, newTx];
       }
 
-      const userSimulatedTxs = simulatedTxs.filter(t => t.userId === userId);
+      const userSimulatedTxs = simulatedTxs;
       // Sort chronologically for holdings math
       userSimulatedTxs.sort((a, b) => new Date(a.date) - new Date(b.date));
 
@@ -560,8 +569,15 @@ function Dashboard({ token, accounts = [], selectedAccountId, defaultAccountId }
         }
       }
 
-      // Save transactions
-      localStorage.setItem('indiaportfolio_txs', JSON.stringify(simulatedTxs));
+      // Save transaction to Firestore
+      if (editingTxId) {
+        const txRef = doc(db, 'transactions', editingTxId);
+        const updateData = { ...newTx };
+        delete updateData.id;
+        await updateDoc(txRef, updateData);
+      } else {
+        await addDoc(collection(db, 'transactions'), newTx);
+      }
 
       // Close Dialog
       if (dialogRef.current) {
@@ -587,11 +603,8 @@ function Dashboard({ token, accounts = [], selectedAccountId, defaultAccountId }
     }
 
     try {
-      const userId = token.replace('mock-token-', '');
-      const allTxs = JSON.parse(localStorage.getItem('indiaportfolio_txs') || '[]');
-      const filteredTxs = allTxs.filter(t => !(t.id === id && t.userId === userId));
-
-      localStorage.setItem('indiaportfolio_txs', JSON.stringify(filteredTxs));
+      // Delete from Firestore
+      await deleteDoc(doc(db, 'transactions', id));
 
       setLoading(true);
       await fetchPortfolio();
@@ -1867,9 +1880,9 @@ function Dashboard({ token, accounts = [], selectedAccountId, defaultAccountId }
           </div>
         )}
         
-        {activeTab === 'performance' && (
-          <Performance />
-        )}
+        {activeTab === 'performance' ? (
+          <Performance user={user} />
+        ) : null}
       </section>
 
       {/* MODAL 1: ADD TRANSACTION DIALOG */}

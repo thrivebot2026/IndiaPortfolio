@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Mail, Lock, User, LogIn, UserPlus } from 'lucide-react';
-
+import { auth } from '../firebase';
+import { signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
 function Login({ onLoginSuccess }) {
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
@@ -9,7 +10,7 @@ function Login({ onLoginSuccess }) {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
 
@@ -19,47 +20,32 @@ function Login({ onLoginSuccess }) {
     }
 
     setLoading(true);
-    setTimeout(() => {
-      try {
-        const users = JSON.parse(localStorage.getItem('indiaportfolio_users') || '[]');
-
-        if (isLogin) {
-          // Find matching user
-          const user = users.find(u => u.email.toLowerCase() === email.toLowerCase());
-          if (!user || user.password !== password) {
-            setError('Invalid email or password');
-            setLoading(false);
-            return;
-          }
-          onLoginSuccess(`mock-token-${user.id}`, { id: user.id, email: user.email, name: user.name });
-        } else {
-          // Register user
-          const exists = users.some(u => u.email.toLowerCase() === email.toLowerCase());
-          if (exists) {
-            setError('User already exists with this email');
-            setLoading(false);
-            return;
-          }
-
-          const newUser = {
-            id: Date.now().toString(36) + Math.random().toString(36).substr(2, 5),
-            name,
-            email,
-            password, // Saved locally in browser storage
-            createdAt: new Date().toISOString()
-          };
-
-          users.push(newUser);
-          localStorage.setItem('indiaportfolio_users', JSON.stringify(users));
-          onLoginSuccess(`mock-token-${newUser.id}`, { id: newUser.id, email: newUser.email, name: newUser.name });
-        }
-      } catch (err) {
-        console.error('LocalStorage auth error:', err);
-        setError('Failed to access local browser storage.');
-      } finally {
-        setLoading(false);
+    try {
+      if (isLogin) {
+        await signInWithEmailAndPassword(auth, email, password);
+        // App.jsx will handle onAuthStateChanged, so we don't need onLoginSuccess
+      } else {
+        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        await updateProfile(userCredential.user, { displayName: name });
+        // Optional: Save user in Firestore as well for future references
+        const { doc, setDoc } = await import('firebase/firestore');
+        const { db } = await import('../firebase');
+        await setDoc(doc(db, 'users', userCredential.user.uid), {
+          name: name,
+          email: email,
+          createdAt: new Date().toISOString()
+        });
       }
-    }, 600);
+    } catch (err) {
+      console.error('Auth error:', err);
+      // Clean up Firebase error message
+      let message = 'Authentication failed.';
+      if (err.code === 'auth/invalid-credential') message = 'Invalid email or password.';
+      if (err.code === 'auth/email-already-in-use') message = 'User already exists with this email.';
+      setError(message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
