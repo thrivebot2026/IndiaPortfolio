@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import AllocationChart from './AllocationChart';
+import Performance from './Performance';
 import { 
   Search, Plus, RefreshCw, Trash2, ArrowUpRight, ArrowDownRight, 
   TrendingUp, TrendingDown, Wallet, Calendar, Landmark, Info, X, ChevronDown, ChevronRight,
@@ -1309,31 +1310,46 @@ function Dashboard({ token, accounts = [], selectedAccountId, defaultAccountId }
             >
               Transaction Log ({transactions.length})
             </button>
+            <button
+              onClick={() => setActiveTab('performance')}
+              className="btn"
+              style={{
+                background: activeTab === 'performance' ? 'rgba(99, 102, 241, 0.12)' : 'transparent',
+                color: activeTab === 'performance' ? '#6366f1' : 'var(--text-secondary)',
+                border: activeTab === 'performance' ? '1px solid rgba(99, 102, 241, 0.25)' : '1px solid transparent',
+                padding: '0.5rem 1rem',
+                fontSize: '0.875rem'
+              }}
+            >
+              Performance
+            </button>
           </div>
           
-          <button
-            onClick={() => {
-              // Custom popup trigger
-              setEditingTxId(null);
-              setFormSymbol('');
-              setFormName('');
-              setFormUrlPath('');
-              setFormType('BUY');
-              setFormQuantity('');
-              setFormPrice('');
-              setFormDate(new Date().toISOString().split('T')[0]);
-              setFormDateDisplay(toDisplayDate(new Date().toISOString().split('T')[0]));
-              setFormNotes('');
-              setFormError('');
-              setFormAccountId(selectedAccountId || defaultAccountId || (accounts.length > 0 ? accounts[0].id : ''));
-              if (dialogRef.current) dialogRef.current.showModal();
-            }}
-            className="btn btn-primary"
-            style={{ padding: '0.5rem 1rem', fontSize: '0.8125rem' }}
-          >
-            <Plus size={16} />
-            <span>Manual Transaction</span>
-          </button>
+          {activeTab !== 'performance' && (
+            <button
+              onClick={() => {
+                // Custom popup trigger
+                setEditingTxId(null);
+                setFormSymbol('');
+                setFormName('');
+                setFormUrlPath('');
+                setFormType('BUY');
+                setFormQuantity('');
+                setFormPrice('');
+                setFormDate(new Date().toISOString().split('T')[0]);
+                setFormDateDisplay(toDisplayDate(new Date().toISOString().split('T')[0]));
+                setFormNotes('');
+                setFormError('');
+                setFormAccountId(selectedAccountId || defaultAccountId || (accounts.length > 0 ? accounts[0].id : ''));
+                if (dialogRef.current) dialogRef.current.showModal();
+              }}
+              className="btn btn-primary"
+              style={{ padding: '0.5rem 1rem', fontSize: '0.8125rem' }}
+            >
+              <Plus size={16} />
+              <span>Manual Transaction</span>
+            </button>
+          )}
         </div>
 
         {/* Table 1: Current Holdings */}
@@ -1849,6 +1865,10 @@ function Dashboard({ token, accounts = [], selectedAccountId, defaultAccountId }
               </tbody>
             </table>
           </div>
+        )}
+        
+        {activeTab === 'performance' && (
+          <Performance />
         )}
       </section>
 

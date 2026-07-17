@@ -1,0 +1,263 @@
+[
+  {
+    "type": "fund",
+    "label": "Invested Fund",
+    "value": 39.5,
+    "pocBase": 40
+  },
+  {
+    "type": "year",
+    "age": 31,
+    "year": 2014,
+    "value": 55.86,
+    "nifty": 33
+  },
+  {
+    "type": "fund",
+    "label": "Fund Added in 2015",
+    "value": 27.8
+  },
+  {
+    "type": "year",
+    "age": 32,
+    "year": 2015,
+    "value": 111,
+    "nifty": -5
+  },
+  {
+    "type": "fund",
+    "label": "Fund Added in 2016",
+    "value": 4.5
+  },
+  {
+    "type": "year",
+    "age": 33,
+    "year": 2016,
+    "value": 105.75,
+    "nifty": 3
+  },
+  {
+    "type": "fund",
+    "label": "Fund Added in 2017",
+    "value": 8.5
+  },
+  {
+    "type": "year",
+    "age": 34,
+    "year": 2017,
+    "value": 222.7,
+    "nifty": 28.6
+  },
+  {
+    "type": "fund",
+    "label": "Fund Added in 2018",
+    "value": 8
+  },
+  {
+    "type": "year",
+    "age": 35,
+    "year": 2018,
+    "value": 143,
+    "nifty": 4
+  },
+  {
+    "type": "year",
+    "age": 36,
+    "year": 2019,
+    "value": 119.42,
+    "nifty": 12
+  },
+  {
+    "type": "year",
+    "age": 37,
+    "year": 2020,
+    "value": 139.1,
+    "nifty": 14.17
+  },
+  {
+    "type": "year",
+    "age": 38,
+    "year": 2021,
+    "value": 248.18,
+    "nifty": 24.12
+  },
+  {
+    "type": "year",
+    "age": 39,
+    "year": 2022,
+    "value": 241.87,
+    "nifty": 4.32
+  },
+  {
+    "type": "year",
+    "age": 40,
+    "year": 2023,
+    "value": 322.93,
+    "nifty": 20
+  },
+  {
+    "type": "fund",
+    "label": "Fund Added in 2024",
+    "value": 8
+  },
+  {
+    "type": "year",
+    "age": 41,
+    "year": 2024,
+    "value": 402.1,
+    "nifty": 9
+  },
+  {
+    "type": "fund",
+    "label": "Fund Added in 2025 - Mom AW Fund",
+    "value": 15
+  },
+  {
+    "type": "fund",
+    "label": "Trust and Parag MF 2025 - Mom AW Fund",
+    "value": 10
+  },
+  {
+    "type": "fund",
+    "label": "Motilal Received",
+    "value": 5.5
+  },
+  {
+    "type": "year",
+    "age": 42,
+    "year": 2025,
+    "value": 404.63,
+    "nifty": 10.5
+  },
+  {
+    "type": "fund",
+    "label": "LandSell",
+    "value": 90
+  },
+  {
+    "type": "year",
+    "age": 43,
+    "year": 2026,
+    "value": null,
+    "nifty": null
+  },
+  {
+    "type": "year",
+    "age": 44,
+    "year": 2027,
+    "value": null,
+    "nifty": null
+  },
+  {
+    "type": "year",
+    "age": 45,
+    "year": 2028,
+    "value": null,
+    "nifty": null
+  },
+  {
+    "type": "year",
+    "age": 46,
+    "year": 2029,
+    "value": null,
+    "nifty": null
+  },
+  {
+    "type": "year",
+    "age": 47,
+    "year": 2030,
+    "value": null,
+    "nifty": null
+  },
+  {
+    "type": "year",
+    "age": 48,
+    "year": 2031,
+    "value": null,
+    "nifty": null
+  },
+  {
+    "type": "year",
+    "age": 49,
+    "year": 2032,
+    "value": null,
+    "nifty": null
+  },
+  {
+    "type": "year",
+    "age": 50,
+    "year": 2033,
+    "value": null,
+    "nifty": null
+  },
+  {
+    "type": "year",
+    "age": 51,
+    "year": 2034,
+    "value": null,
+    "nifty": null
+  },
+  {
+    "type": "year",
+    "age": 52,
+    "year": 2035,
+    "value": null,
+    "nifty": null
+  },
+  {
+    "type": "year",
+    "age": 53,
+    "year": 2036,
+    "value": null,
+    "nifty": null
+  },
+  {
+    "type": "year",
+    "age": 54,
+    "year": 2037,
+    "value": null,
+    "nifty": null
+  },
+  {
+    "type": "year",
+    "age": 55,
+    "year": 2038,
+    "value": null,
+    "nifty": null
+  },
+  {
+    "type": "year",
+    "age": 56,
+    "year": 2039,
+    "value": null,
+    "nifty": null
+  },
+  {
+    "type": "year",
+    "age": 57,
+    "year": 2040,
+    "value": null,
+    "nifty": null
+  },
+  {
+    "type": "year",
+    "age": 58,
+    "year": 2041,
+    "value": null,
+    "nifty": null
+  },
+  {
+    "type": "year",
+    "age": 59,
+    "year": 2042,
+    "value": null,
+    "nifty": null
+  },
+  {
+    "type": "year",
+    "age": 60,
+    "year": 2043,
+    "value": null,
+    "nifty": null
+  }
+]
