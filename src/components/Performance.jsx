@@ -135,104 +135,131 @@ export default function Performance() {
   const rows = calculateTable();
 
   return (
-    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <div className="glass-panel p-6 border-l-4 border-l-indigo-500">
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h2 className="text-xl font-semibold text-white mb-1">Portfolio Performance Tracking</h2>
-            <p className="text-sm text-gray-400">
-              Track portfolio value against compound growth targets.
-            </p>
-          </div>
-          <button 
+    <div className="card" style={{ marginTop: '1.5rem', animation: 'fadeIn 0.3s ease' }}>
+      <div className="card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem', padding: '1.5rem', borderBottom: '1px solid var(--card-border)' }}>
+        <div>
+          <h2 style={{ fontSize: '1.25rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '0.25rem' }}>Portfolio Performance Tracking</h2>
+          <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>Track portfolio value against compound growth targets.</p>
+        </div>
+        <div style={{ display: 'flex', gap: '0.5rem' }}>
+          <button
             onClick={() => {
-              if(window.confirm('Reset to default values? All manual edits will be lost.')) {
+              if (window.confirm('Are you sure you want to reset all performance data to initial values?')) {
                 setData(INITIAL_DATA);
                 localStorage.setItem('indiaportfolio_performance_data', JSON.stringify(INITIAL_DATA));
               }
             }}
-            className="btn btn-secondary flex items-center gap-2"
+            className="btn"
+            style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.875rem' }}
           >
-            <RefreshCw className="w-4 h-4" />
+            <RefreshCw size={14} />
             Reset Data
           </button>
         </div>
-        
-        <div className="overflow-x-auto rounded-lg border border-white/5">
-          <table className="w-full text-left border-collapse min-w-[800px]">
-            <thead>
-              <tr className="bg-[rgba(255,255,255,0.02)] border-b border-[rgba(255,255,255,0.05)]">
-                <th className="p-4 font-semibold text-sm text-gray-400 pl-4">Age</th>
-                <th className="p-4 font-semibold text-sm text-gray-400">Year (31st Dec)</th>
-                <th className="p-4 font-semibold text-sm text-gray-400 text-right">Portfolio Value (Lakhs)</th>
-                <th className="p-4 font-semibold text-sm text-gray-400 text-right">Percentage Gain</th>
-                <th className="p-4 font-semibold text-sm text-gray-400 text-right">Nifty Return</th>
-                <th className="p-4 font-semibold text-sm text-[#10b981] text-right bg-[#10b981]/10 border-l border-[#10b981]/20">POC with 18%</th>
-                <th className="p-4 font-semibold text-sm text-gray-400 text-right border-l border-[rgba(255,255,255,0.05)]">POC with 14%</th>
-                <th className="p-4 font-semibold text-sm text-gray-400 text-right border-l border-[rgba(255,255,255,0.05)] pr-4">POC with 12%</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((row, index) => {
-                const isFund = row.type === 'fund';
-                const bgClass = isFund ? 'bg-[#2563eb]/20' : (index % 2 === 0 ? 'bg-[rgba(255,255,255,0.02)]' : '');
-                const borderClass = isFund ? 'border-y border-[#3b82f6]/40' : 'border-b border-[rgba(255,255,255,0.05)]';
-                
-                return (
-                  <tr key={index} className={`${borderClass} hover:bg-[rgba(255,255,255,0.05)] transition-colors ${bgClass}`}>
-                    {isFund ? (
-                      <td colSpan={2} className="p-3 text-sm font-medium text-[#60a5fa] pl-4">
+      </div>
+      
+      <div className="custom-table-container" style={{ margin: '1.5rem' }}>
+        <table className="custom-table">
+          <thead>
+            <tr>
+              <th style={{ width: '60px' }}>Age</th>
+              <th>Year (31st Dec)</th>
+              <th style={{ textAlign: 'right' }}>Portfolio Value (Lakhs)</th>
+              <th style={{ textAlign: 'right' }}>Percentage Gain</th>
+              <th style={{ textAlign: 'right' }}>Nifty Return</th>
+              <th style={{ textAlign: 'right', color: '#10b981', background: 'rgba(16, 185, 129, 0.1)', borderLeft: '1px solid rgba(16, 185, 129, 0.2)' }}>POC with 18%</th>
+              <th style={{ textAlign: 'right', borderLeft: '1px solid var(--card-border)' }}>POC with 14%</th>
+              <th style={{ textAlign: 'right', borderLeft: '1px solid var(--card-border)' }}>POC with 12%</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((row, index) => {
+              const isFund = row.type === 'fund';
+              
+              let rowStyle = {};
+              if (isFund) {
+                rowStyle = { backgroundColor: 'rgba(37, 99, 235, 0.15)', borderTop: '1px solid rgba(59, 130, 246, 0.3)', borderBottom: '1px solid rgba(59, 130, 246, 0.3)' };
+              } else if (index % 2 === 0) {
+                rowStyle = { backgroundColor: 'rgba(255, 255, 255, 0.015)' };
+              }
+              
+              return (
+                <tr key={index} style={rowStyle}>
+                  {isFund ? (
+                    <td colSpan={2} style={{ color: '#60a5fa', fontWeight: 500 }}>
+                      {row.label || row.year}
+                    </td>
+                  ) : (
+                    <>
+                      <td style={{ color: 'var(--text-secondary)' }}>
+                        {row.age || ''}
+                      </td>
+                      <td style={{ color: 'var(--text-secondary)' }}>
                         {row.label || row.year}
                       </td>
-                    ) : (
-                      <>
-                        <td className="p-3 text-sm text-gray-300 pl-4">
-                          {row.age || ''}
-                        </td>
-                        <td className="p-3 text-sm text-gray-300">
-                          {row.label || row.year}
-                        </td>
-                      </>
-                    )}
-                    <td className="p-3 text-right">
-                      <input
-                        type="number"
-                        step="any"
-                        value={row.value === null ? '' : row.value}
-                        onChange={(e) => handleValueChange(index, e.target.value)}
-                        className={`bg-[rgba(0,0,0,0.2)] border ${isFund ? 'border-[#3b82f6]/50 focus:border-[#60a5fa] focus:ring-[#60a5fa] text-[#60a5fa]' : 'border-[rgba(255,255,255,0.1)] focus:border-indigo-500 focus:ring-indigo-500 text-white'} rounded px-2 py-1 text-sm text-right w-28 focus:outline-none focus:ring-1 transition-colors font-medium`}
-                        placeholder="0.00"
-                      />
-                    </td>
-                    <td className="p-3 text-sm text-right">
-                      {row.percentageGain !== null && row.percentageGain !== undefined ? (
-                        <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${row.percentageGain > 0 ? 'bg-green-500/10 text-green-400 border border-green-500/20' : (row.percentageGain < 0 ? 'bg-red-500/10 text-red-400 border border-red-500/20' : 'text-gray-400')}`}>
-                          {row.percentageGain > 0 ? '+' : ''}{formatPercent(row.percentageGain)}
-                        </span>
-                      ) : ''}
-                    </td>
-                    <td className="p-3 text-sm text-right text-gray-400">
-                      {row.nifty !== null && row.nifty !== undefined ? (
-                        <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-xs ${row.nifty > 0 ? 'text-green-400/80' : (row.nifty < 0 ? 'text-red-400/80' : 'text-gray-500')}`}>
-                          {row.nifty > 0 ? '+' : ''}{row.nifty}%
-                        </span>
-                      ) : ''}
-                    </td>
-                    <td className="p-3 text-sm text-right font-semibold text-[#10b981] bg-[#10b981]/5 border-l border-[#10b981]/20">
-                      {formatNumber(row.poc18)}
-                    </td>
-                    <td className="p-3 text-sm text-right font-medium text-gray-300 border-l border-[rgba(255,255,255,0.05)]">
-                      {formatNumber(row.poc14)}
-                    </td>
-                    <td className="p-3 text-sm text-right font-medium text-gray-300 border-l border-[rgba(255,255,255,0.05)] pr-4">
-                      {formatNumber(row.poc12)}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+                    </>
+                  )}
+                  <td style={{ textAlign: 'right' }}>
+                    <input
+                      type="number"
+                      step="any"
+                      value={row.value === null ? '' : row.value}
+                      onChange={(e) => handleValueChange(index, e.target.value)}
+                      style={{
+                        backgroundColor: 'rgba(0,0,0,0.2)',
+                        border: isFund ? '1px solid rgba(59, 130, 246, 0.5)' : '1px solid rgba(255,255,255,0.1)',
+                        color: isFund ? '#60a5fa' : 'white',
+                        borderRadius: '4px',
+                        padding: '4px 8px',
+                        fontSize: '0.875rem',
+                        textAlign: 'right',
+                        width: '100px',
+                        outline: 'none'
+                      }}
+                      placeholder="0.00"
+                    />
+                  </td>
+                  <td style={{ textAlign: 'right' }}>
+                    {row.percentageGain !== null && row.percentageGain !== undefined ? (
+                      <span style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        padding: '2px 6px',
+                        borderRadius: '4px',
+                        fontSize: '0.75rem',
+                        fontWeight: 500,
+                        backgroundColor: row.percentageGain > 0 ? 'rgba(16, 185, 129, 0.1)' : (row.percentageGain < 0 ? 'rgba(244, 63, 94, 0.1)' : 'transparent'),
+                        color: row.percentageGain > 0 ? '#4ade80' : (row.percentageGain < 0 ? '#f87171' : 'var(--text-secondary)'),
+                        border: row.percentageGain > 0 ? '1px solid rgba(16, 185, 129, 0.2)' : (row.percentageGain < 0 ? '1px solid rgba(244, 63, 94, 0.2)' : 'none')
+                      }}>
+                        {row.percentageGain > 0 ? '+' : ''}{formatPercent(row.percentageGain)}
+                      </span>
+                    ) : ''}
+                  </td>
+                  <td style={{ textAlign: 'right', color: 'var(--text-secondary)' }}>
+                    {row.nifty !== null && row.nifty !== undefined ? (
+                      <span style={{
+                        color: row.nifty > 0 ? '#4ade80' : (row.nifty < 0 ? '#f87171' : 'var(--text-muted)'),
+                        fontSize: '0.75rem'
+                      }}>
+                        {row.nifty > 0 ? '+' : ''}{row.nifty}%
+                      </span>
+                    ) : ''}
+                  </td>
+                  <td style={{ textAlign: 'right', fontWeight: 600, color: '#10b981', backgroundColor: 'rgba(16, 185, 129, 0.05)', borderLeft: '1px solid rgba(16, 185, 129, 0.2)' }}>
+                    {formatNumber(row.poc18)}
+                  </td>
+                  <td style={{ textAlign: 'right', color: 'var(--text-primary)', borderLeft: '1px solid var(--card-border)' }}>
+                    {formatNumber(row.poc14)}
+                  </td>
+                  <td style={{ textAlign: 'right', color: 'var(--text-primary)', borderLeft: '1px solid var(--card-border)' }}>
+                    {formatNumber(row.poc12)}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
       </div>
     </div>
   );
