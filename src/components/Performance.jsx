@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { RefreshCw } from 'lucide-react';
+import { RefreshCw, Plus } from 'lucide-react';
 
 const INITIAL_DATA = [
   { id: 'inv', type: 'fund', label: 'Invested Fund', value: 39.5, pocBase: 40.00 },
@@ -51,6 +51,37 @@ export default function Performance() {
     const val = newValueStr === '' ? null : parseFloat(newValueStr);
     newData[index] = { ...newData[index], value: val };
     
+    setData(newData);
+    localStorage.setItem('indiaportfolio_performance_data', JSON.stringify(newData));
+  };
+
+  const handleAddFund = () => {
+    const yearStr = window.prompt("Enter the Year this fund was added (e.g. 2027):");
+    if (!yearStr) return;
+    const yearNum = parseInt(yearStr, 10);
+    if (isNaN(yearNum)) {
+      alert("Invalid year. Please enter a valid number.");
+      return;
+    }
+
+    const labelStr = window.prompt("Enter a label/name for this fund (e.g. 'Bonus'):") || `Fund Added in ${yearNum}`;
+    
+    const newData = [...data];
+    const insertIndex = newData.findIndex(r => r.type === 'year' && r.year === yearNum);
+    
+    if (insertIndex === -1) {
+      alert(`Year ${yearNum} not found in the table. Please choose a year between 2014 and 2043.`);
+      return;
+    }
+
+    const newFund = {
+      id: `f${yearNum}_${Date.now()}`,
+      type: 'fund',
+      label: labelStr,
+      value: null
+    };
+
+    newData.splice(insertIndex, 0, newFund);
     setData(newData);
     localStorage.setItem('indiaportfolio_performance_data', JSON.stringify(newData));
   };
@@ -142,6 +173,14 @@ export default function Performance() {
           <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>Track portfolio value against compound growth targets.</p>
         </div>
         <div style={{ display: 'flex', gap: '0.5rem' }}>
+          <button
+            onClick={handleAddFund}
+            className="btn btn-primary"
+            style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.875rem' }}
+          >
+            <Plus size={14} />
+            Add Fund
+          </button>
           <button
             onClick={() => {
               if (window.confirm('Are you sure you want to reset all performance data to initial values?')) {
