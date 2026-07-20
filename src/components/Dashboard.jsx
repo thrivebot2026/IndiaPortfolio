@@ -204,11 +204,7 @@ function Dashboard({ user, accounts = [], selectedAccountId, defaultAccountId })
 
         if (shouldFetch) {
           try {
-            const response = await fetch(`/api/stocks/price?urlPath=${encodeURIComponent(holding.urlPath)}`, {
-              headers: {
-                'Authorization': `Bearer ${token}`
-              }
-            });
+            const response = await fetch(`/api/stocks/price?urlPath=${encodeURIComponent(holding.urlPath)}`);
             if (response.ok) {
               const latestData = await response.json();
               priceData = {
@@ -397,11 +393,7 @@ function Dashboard({ user, accounts = [], selectedAccountId, defaultAccountId })
 
     setSearchLoading(true);
     try {
-      const response = await fetch(`/api/stocks/search?q=${encodeURIComponent(q)}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
+      const response = await fetch(`/api/stocks/search?q=${encodeURIComponent(q)}`);
       if (response.ok) {
         const data = await response.json();
         setSearchResults(data);
@@ -451,11 +443,7 @@ function Dashboard({ user, accounts = [], selectedAccountId, defaultAccountId })
     setFormLoading(true);
     try {
       // Fetch latest price from scraper to pre-populate form
-      const response = await fetch(`/api/stocks/price?urlPath=${encodeURIComponent(urlPath)}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
+      const response = await fetch(`/api/stocks/price?urlPath=${encodeURIComponent(urlPath)}`);
       if (response.ok) {
         const data = await response.json();
         if (data.currentPrice) {
