@@ -1,5 +1,7 @@
 {
-  "projects": {},
+  "projects": {
+    "default": "indiaportfolio-chikoo"
+  },
   "targets": {},
   "etags": {}
 }

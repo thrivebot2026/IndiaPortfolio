@@ -137,7 +137,7 @@ function App() {
 
   return (
     <div className="app-container">
-      {token && user ? (
+      {user ? (
         <>
           {/* Global Glass Header */}
           <header className="glass-panel" style={{

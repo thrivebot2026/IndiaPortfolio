@@ -15,14 +15,11 @@ export default function LocalDataMigrator({ user, onComplete }) {
     const perf = localStorage.getItem('indiaportfolio_performance_data');
     if ((accounts && accounts !== '[]') || (txs && txs !== '[]') || perf) {
       setHasLocalData(true);
+      handleMigrate();
     }
   }, []);
 
   const handleMigrate = async () => {
-    if (!window.confirm("This will upload all your old local data to the cloud, overwriting any current cloud data. Are you sure?")) {
-      return;
-    }
-    
     setIsMigrating(true);
     setError('');
     try {
